@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Weather App</title>
+    <style>
+        /* RESET & FONT */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            transition: .3s;
+        }
+
+        /* ANIMATED BACKGROUND */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Dynamic Gradient */
+            background: linear-gradient(-45deg, #6a5cff, #8f7bff, #24d2ff, #23a6d5);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #222;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body.dark {
+            background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #1a1a2e);
+            background-size: 400% 400%;
+            color: #fff;
+        }
+
+        /* HEADER */
+        header {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, .8);
+            backdrop-filter: blur(12px);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, .1);
+        }
+
+        body.dark header {
+            background: rgba(0, 0, 0, .4);
+        }
+
+        .toggle {
+            cursor: pointer;
+            font-size: 18px;
+            background: #6a5cff;
+            color: white;
+            padding: 5px 12px;
+            border: none;
+            border-radius: 20px;
+        }
+
+        /* MAIN CARD */
+        .main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .app {
+            width: 360px;
+            background: rgba(255, 255, 255, .25);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, .3);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, .15);
+        }
+
+        body.dark .app {
+            background: rgba(0, 0, 0, .3);
+        }
+
+        /* SEARCH */
+        .search {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, .8);
+        }
+
+        button.search-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 12px;
+            background: #6a5cff;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* CURRENT WEATHER */
+        .current {
+            text-align: center;
+        }
+
+        .current .temp {
+            font-size: 50px;
+            font-weight: 800;
+            margin: 5px 0;
+        }
+
+        /* WEEKLY FORECAST */
+        .week {
+            margin-top: 25px;
+        }
+
+        .days {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .day {
+            min-width: 85px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: 15px;
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+        
+        .day b { font-size: 14px; }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h2>🌦 Premium Weather</h2>
+        <button class="toggle" id="mode" onclick="toggleDark()">🌙</button>
+    </header>
+
+    <div class="main">
+        <div class="app">
+            <div class="search">
+                <input id="city" placeholder="Enter city...">
+                <button class="search-btn" onclick="getWeather()">Search</button>
+            </div>
+
+            <div class="current" id="current">
+                <p>Detecting your location...</p>
+            </div>
+
+            <div class="week">
+                <h4>📅 Weekly Forecast</h4>
+                <div class="days" id="weekly"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Toggle Dark Mode
+        function toggleDark() {
+            document.body.classList.toggle("dark");
+            document.getElementById("mode").innerText = document.body.classList.contains("dark") ? "☀️" : "🌙";
+        }
+
+        // 2. Auto-load on startup using Browser Geolocation
+        window.onload = () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        // Agar location mil jaye to latitude/longitude se fetch karein
+                        getWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    () => {
+                        // Agar user mana kar de to default city load karein
+                        document.getElementById("current").innerHTML = "Search for a city above!";
+                    }
+                );
+            }
+        };
+
+        // Fetch using Coordinates (Auto-detect)
+        async function getWeatherByCoords(lat, lon) {
+            try {
+                // Pehle city ka naam nikalte hain reverse geocoding se
+                const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                const geoData = await geo.json();
+                const cityName = geoData.address.city || geoData.address.town || "Your Location";
+                
+                document.getElementById("city").value = cityName;
+                getWeather(cityName, lat, lon);
+            } catch (e) {
+                console.error("Auto-detect failed", e);
+            }
+        }
+
+        // Main Weather Function
+        async function getWeather(inputCity = null, lat = null, lon = null) {
+            const city = inputCity || document.getElementById("city").value.trim();
+            const cur = document.getElementById("current");
+            const weekBox = document.getElementById("weekly");
+
+            if (!city && !lat) { alert("Please enter a city name"); return; }
+
+            cur.innerHTML = "⏳ Loading...";
+            weekBox.innerHTML = "";
+
+            try {
+                // 1. Current Weather (wttr.in)
+                const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+                const data = await res.json();
+                const w = data.current_condition[0];
+
+                cur.innerHTML = `
+                    <div class="temp">${w.temp_C}°C</div>
+                    <div style="font-weight:600; font-size:18px">${city}</div>
+                    <div class="desc" style="margin-bottom:10px">${w.weatherDesc[0].value}</div>
+                    <div style="font-size:13px">💧 Humidity: ${w.humidity}% | 🌬 Wind: ${w.windspeedKmph}km/h</div>
+                `;
+
+                // 2. Weekly Forecast (Open-Meteo)
+                let latitude = lat, longitude = lon;
+                
+                if (!lat) {
+                    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
+                    const g = await geoRes.json();
+                    if (!g.results) { weekBox.innerHTML = "Forecast data unavailable"; return; }
+                    latitude = g.results[0].latitude;
+                    longitude = g.results[0].longitude;
+                }
+
+                const weekRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`);
+                const weekData = await weekRes.json();
+
+                weekData.daily.time.forEach((d, i) => {
+                    const dayName = new Date(d).toLocaleDateString("en-US", { weekday: "short" });
+                    let icon = "🌥";
+                    const code = weekData.daily.weathercode[i];
+                    if (code === 0) icon = "☀️";
+                    else if (code <= 3) icon = "🌤";
+                    else if (code <= 48) icon = "🌫";
+                    else if (code <= 67) icon = "🌧";
+                    else if (code <= 77) icon = "❄️";
+                    else icon = "⛈";
+
+                    weekBox.innerHTML += `
+                        <div class="day">
+                            <div><b>${dayName}</b></div>
+                            <div style="font-size:24px; margin:5px 0">${icon}</div>
+                            <div style="font-weight:bold">${weekData.daily.temperature_2m_max[i]}°</div>
+                            <div style="opacity:0.7; font-size:12px">${weekData.daily.temperature_2m_min[i]}°</div>
+                        </div>
+                    `;
+                });
+
+            } catch (e) {
+                cur.innerHTML = "❌ Error fetching data";
+            }
+        }
+    </script>
+</body>
+</html>
