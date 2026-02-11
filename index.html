@@ -151,13 +151,80 @@
         }
         
         .day b { font-size: 14px; }
+
+
+
+        /* ☁️ Premium Soft Clouds */
+.cloud {
+    position: fixed;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    filter: blur(8px);
+    z-index: 0;
+    animation: floatCloud linear infinite;
+}
+
+/* Different cloud sizes */
+.cloud1 {
+    width: 180px;
+    height: 80px;
+    top: 90px;
+    left: -200px;
+    animation-duration: 20s;
+}
+
+.cloud2 {
+    width: 250px;
+    height: 110px;
+    top: 170px;
+    left: -300px;
+    animation-duration: 25s;
+}
+
+.cloud3 {
+    width: 140px;
+    height: 60px;
+    top: 250px;
+    left: -250px;
+    animation-duration: 15s;
+}
+
+        /* Extra fluffy effect */
+        .cloud::before,
+        .cloud::after {
+            content: "";
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 60%;
+            height: 120%;
+            top: -40%;
+            left: 15%;
+        }
+
+        .cloud::after {
+            width: 50%;
+            height: 100%;
+            top: -30%;
+            right: 10%;
+        }
+
+        /* Smooth floating animation */
+        @keyframes floatCloud {
+            from { transform: translateX(0); }
+            to { transform: translateX(120vw); }
+        }
+
     </style>
 </head>
 
 <body>
 
     <header>
-        <h2>🌦 Premium Weather</h2>
+        <h2>🌦 Weather Update </h2>
         <button class="toggle" id="mode" onclick="toggleDark()">🌙</button>
     </header>
 
@@ -173,13 +240,19 @@
             </div>
 
             <div class="week">
-                <h4>📅 Weekly Forecast</h4>
+                <h4>Weekly Forecast</h4>
                 <div class="days" id="weekly"></div>
             </div>
         </div>
     </div>
 
-    <script>
+            <!--Animated Clouds -->
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+
+
+    <script>  
         // 1. Toggle Dark Mode
         function toggleDark() {
             document.body.classList.toggle("dark");
